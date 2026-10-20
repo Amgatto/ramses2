@@ -135,8 +135,8 @@ SUBROUTINE rtz_solve_cooling(r, tables, T2, aexp, xion, nElement, &
   real(kind=8),dimension(1:nrtgrp, 1:nvector):: Np, dNpdt
   real(kind=8),dimension(1:ndim, 1:nrtgrp, 1:nvector):: Fp, dFpdt
   integer::ilevel
-  real(kind=8):: dx_SS_H2
 #endif
+  real(kind=8):: dx_SS_H2
 !  logical,dimension(1:nvector):: c_switch
   real(kind=8)::dt
   integer::ncell
@@ -718,12 +718,18 @@ contains
        !HKnote: we call prime first so what we can store the correct cooling rates
        saved_cooling_rates = 0.d0
        call all_cooling(r, tables, 1.001d0*TK, ne, aexp, nElement_dep(1:n_elements), dXion, total_G0, dust_to_gas_mass_ratio_over_mw, xe, &
-                        primary_cosmic_ray_ionization_rate, H2_cosmic_ray_ionization_rate, &
-                        ss_factor, dNp, ilevel, Crate_prime, saved_cooling_rates, saved_cooling_rates_names)
+                        primary_cosmic_ray_ionization_rate, H2_cosmic_ray_ionization_rate, ss_factor, &
+#IFDEF DO_RT
+                        dNp, ilevel, &
+#ENDIF
+                        Crate_prime, saved_cooling_rates, saved_cooling_rates_names)
        saved_cooling_rates = 0.d0
        call all_cooling(r, tables, TK, ne, aexp, nElement_dep(1:n_elements), dXion, total_G0, dust_to_gas_mass_ratio_over_mw, xe, &
-                        primary_cosmic_ray_ionization_rate, H2_cosmic_ray_ionization_rate, &
-                        ss_factor, dNp, ilevel, Crate, saved_cooling_rates, saved_cooling_rates_names)
+                        primary_cosmic_ray_ionization_rate, H2_cosmic_ray_ionization_rate, ss_factor, &
+#IFDEF DO_RT
+                        dNp, ilevel, &
+#ENDIF
+                        Crate, saved_cooling_rates, saved_cooling_rates_names)
        Crate_prime = (Crate_prime - Crate) / ((1.001d0*TK) - TK)
        dCdT2 = Crate_prime * mu                            ! dC/dT2 = mu * dC/dT
 

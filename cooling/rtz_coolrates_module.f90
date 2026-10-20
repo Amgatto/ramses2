@@ -1725,6 +1725,7 @@ FUNCTION CT_heat_cool(T, element_number_densities, element_ion_fractions) result
 
 END FUNCTION CT_heat_cool
 
+#IFDEF DO_RT
 FUNCTION local_photoheating(tables, dNp, element_number_densities, element_ion_fractions, ilevel) result(rate)
     ! Heating due to photoionization from the local radiation field
     use rtz_module, only: elements, n_elements
@@ -1751,10 +1752,14 @@ FUNCTION local_photoheating(tables, dNp, element_number_densities, element_ion_f
        end if
     end do
 END FUNCTION local_photoheating
+#ENDIF
 
 SUBROUTINE all_cooling(r, tables, T, ne, aexp, element_number_densities, element_ion_fractions, &
-                     G0, f_dg, xe, xi_h_cr, xi_h2_cr, ss_factor, dNp, ilevel, rate, &
-                     saved_cooling_rates, saved_cooling_rates_names)
+                     G0, f_dg, xe, xi_h_cr, xi_h2_cr, ss_factor, &
+#IFDEF DO_RT
+                     dNp, ilevel, &
+#ENDIF
+                     rate, saved_cooling_rates, saved_cooling_rates_names)
     ! Main cooling driver
     !
     ! T --> Temperature [K]
@@ -1777,8 +1782,10 @@ SUBROUTINE all_cooling(r, tables, T, ne, aexp, element_number_densities, element
     real(KIND=8), intent(in):: T, ne, aexp, G0, f_dg, xe, xi_h_cr, xi_h2_cr, ss_factor
     real(KIND=8), intent(in):: element_number_densities(27)
     real(KIND=8), intent(in):: element_ion_fractions(27,27)
+#IFDEF DO_RT
     real(kind=8), dimension(nrtgrp), intent(in):: dNp
     integer, intent(in):: ilevel
+#ENDIF
     real(KIND=8), intent(inout):: rate
     real(KIND=8), dimension(50), intent(inout)::saved_cooling_rates
     character(len=20), dimension(50), intent(inout)::saved_cooling_rates_names
@@ -2079,6 +2086,7 @@ SUBROUTINE all_cooling(r, tables, T, ne, aexp, element_number_densities, element
     ! Save cooling rates
     saved_cooling_rates(save_cooling_counter) = charge_transfer_heat_cool; saved_cooling_rates_names(save_cooling_counter) = 'heat_CT'; save_cooling_counter = save_cooling_counter + 1
 
+#IFDEF DO_RT
     ! Photoheating from the local radiation field
     if (r%rt_advect) then
        photoheating = local_photoheating(tables, dNp, element_number_densities, element_ion_fractions, ilevel)
@@ -2086,6 +2094,7 @@ SUBROUTINE all_cooling(r, tables, T, ne, aexp, element_number_densities, element
        ! Save cooling rates
        saved_cooling_rates(save_cooling_counter) = photoheating; saved_cooling_rates_names(save_cooling_counter) = 'heat_PH'; save_cooling_counter = save_cooling_counter + 1
     end if
+#ENDIF
 
     !////////////////////////////////////////////////////
     !//           Calculate Heatint & Cooling          //
