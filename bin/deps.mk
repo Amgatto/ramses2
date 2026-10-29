@@ -73,7 +73,7 @@ input_hydro_grafic.o: amr_commons.o amr_parameters.o hydro_parameters.o mdl.o md
 input_part.o: input_part_ascii.o input_part_gadget.o input_part_grafic.o input_part_ramses.o input_part_restart.o mdl.o mdl_commons.o ramses_commons.o rt_spectra.o
 input_part_ascii.o: amr_commons.o amr_parameters.o mdl.o mdl_commons.o pm_commons.o ramses_commons.o
 input_part_gadget.o: amr_commons.o amr_parameters.o gadgetreadfile.o init_part.o mdl.o mdl_commons.o output_amr.o pm_commons.o ramses_commons.o
-input_part_grafic.o: amr_commons.o amr_parameters.o mdl.o mdl_commons.o pm_commons.o ramses_commons.o
+input_part_grafic.o: amr_commons.o amr_parameters.o input_part_ascii.o mdl.o mdl_commons.o pm_commons.o ramses_commons.o
 input_part_ramses.o: amr_commons.o amr_parameters.o mdl.o mdl_commons.o output_amr.o pm_commons.o pm_parameters.o ramses_commons.o
 input_part_restart.o: amr_commons.o amr_parameters.o mdl.o mdl_commons.o output_amr.o pm_commons.o pm_parameters.o ramses_commons.o
 input_part_zoom.o: amr_commons.o amr_parameters.o mdl.o mdl_commons.o pm_commons.o ramses_commons.o
