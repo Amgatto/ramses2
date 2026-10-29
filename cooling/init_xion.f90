@@ -180,19 +180,24 @@ subroutine init_xion(r,g,m,tables,ilevel)
 #ifdef DO_RTZ
         ! In the case of RTZ, we set everything to neutral to start
         do i=1,nleaf ! loop over cells
-          counter = 1
+          counter = 0
           do iE=1,n_elements ! loop over elements
              if (elements(iE)%atomic_number.gt.0) then
-                do iI=1,elements(iE)%n_ions + elements(iE)%n_mol ! loop over ions + molecules
-                   x = 0.d0
+                do iI=1,elements(iE)%n_ions
+                   x = 1.d-10
                    if (iI.eq.1) then
-                      x = 1.d0
+                      x = 1.d0 - (elements(iE)%n_ions-1)*1.d-10
                    end if
-                   m%uold(ind,r%iIons-1+counter,ind_leaf(i)) = x*m%uold(ind,1,ind_leaf(i))
+                   m%uold(ind,r%iIons+counter,ind_leaf(i)) = x*m%uold(ind,1,ind_leaf(i))
                    counter = counter + 1
                 end do  ! end loop over ions + molecules
              end if
           end do ! end loop over elements
+
+          if (elements(1)%atomic_number.gt.0 .and. r%isH2_rtz) then
+             m%uold(ind,r%iIons+counter,ind_leaf(i)) = 1.d-6*m%uold(ind,1,ind_leaf(i))
+             counter = counter + 1
+          end if
         end do ! end loop over cells
 #else
         do i=1,nleaf

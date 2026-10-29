@@ -82,7 +82,7 @@ subroutine cooling_fine(r,g,m,c,tables,ilevel)
   !-------------------------------------------------------------------
   ! Compute cooling for leaf cells at level ilevel
   !-------------------------------------------------------------------
-  integer::i,ii,jj,ind,igrid,idim,ngrid,nleaf,counter,e_counter
+  integer::i,ii,jj,ind,igrid,idim,ngrid,nleaf,counter
   real(kind=8)::scale_nH,scale_T2,scale_l,scale_d,scale_t,scale_v
   real(kind=8)::dtcool,nH_eos,nCOM,damp_factor,cooling_switch,t_blast
   integer,dimension(1:nvector)::ind_leaf
@@ -227,7 +227,6 @@ subroutine cooling_fine(r,g,m,c,tables,ilevel)
         ! Compute ionization fraction
 #ifdef DO_RTZ
         counter = 0
-        e_counter = 0
         do ii=1,n_elements ! loop over elements
            if (elements(ii)%atomic_number.gt.0) then
               do jj=1,elements(ii)%n_ions ! loop over ions
@@ -236,13 +235,12 @@ subroutine cooling_fine(r,g,m,c,tables,ilevel)
                                    /m%uold(ind,1,ind_leaf(i))
                     if (jj.eq.1) then
                        ! This gives us a number density [Atoms/cm^3]
-                       nElement(ii,i) = m%uold(ind,r%ichem+e_counter,ind_leaf(i)) &
+                       nElement(ii,i) = m%uold(ind,r%ichem+counter,ind_leaf(i)) &
                                        *scale_nH / elements(ii)%atomic_mass
                     end if
                  end do ! end loop over leaf cells
                  counter = counter + 1 ! increment ionization counter
               end do ! end loop over ions
-              e_counter = e_counter + 1 ! increment element counter
            end if
         end do ! end loop over elements
 

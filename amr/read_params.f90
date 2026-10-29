@@ -1293,7 +1293,7 @@ subroutine m_read_params(pst)
      endif
      ! Starting index of ionized species
      iIons = ichem
-     ichem = ichem + icount
+     !ichem = ichem + icount
      ! Check we have enough passive scalar
      if(iIons+iCount-1 .gt. nvar) then
         write(*,*) 'Something wrong with NVAR.'
