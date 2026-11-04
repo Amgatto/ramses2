@@ -130,7 +130,7 @@ subroutine m_phi_fine_cg(pst,ilevel,icount)
   end do
   ! End main iteration loop
 
-  write(*,115)ilevel,iter,error/rhs_norm,error/error_ini
+  if(r%verbose) write(*,115)ilevel,iter,error/rhs_norm,error/error_ini
 115 format('   ==> Level=',i5,' Step=',i5,' Error=',2(1pe10.3,1x))
   if(iter>=itermax)then
      write(*,*)'Poisson failed to converge...'
