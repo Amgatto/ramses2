@@ -213,7 +213,7 @@ subroutine multigrid(pst,ilevel,icount)
 
   end do main_iteration_loop
 
-  print '(A,I0,A,I0,A,1pE10.3)','   ==> Level ',ilevel,' Step ',iter,' Error=',err
+  if(pst%s%r%verbose) print '(A,I0,A,I0,A,1pE10.3)','   ==> Level ',ilevel,' Step ',iter,' Error=',err
   if(iter==MAXITER) print *,'WARN: Fine multigrid Poisson failed to converge...'
 
   ! ---------------------------------------------------------------------
