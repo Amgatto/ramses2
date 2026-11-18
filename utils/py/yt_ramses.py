@@ -49,6 +49,10 @@ particle_field_names = {
     "metallicity": "particle_metallicity",
 }
 
+# Hydrogen and Helium abundances are imposed
+X_H = 0.76
+Y_He = 0.24
+
 def particle_field_list(fields):
     """Return the yt names of the particle fields of a header, with
     (field name, component) of the corresponding RAMSES field."""
@@ -231,12 +235,14 @@ class RamsesIndex(OctreeIndex):
         o = self.dataset._output
         return {ptype: o.npart(ptype) for ptype in o.part}
 
+len_units = "code_length"
 rho_units = "code_density"
 vel_units = "code_velocity"
 pressure_units = "code_pressure"
 b_units = "code_magnetic"
 accel_units = "code_velocity / code_time"
 specific_ener_units = "code_velocity**2"
+n_units = "1/code_length**3"
 
 class RamsesFieldInfo(FieldInfoContainer):
     known_other_fields = (
@@ -275,6 +281,110 @@ class RamsesFieldInfo(FieldInfoContainer):
         ("particle_merging_time", ("code_time", [], None)),
         ("particle_metallicity", ("", [], None)),
     )
+
+
+    def setup_fluid_fields(self):
+        super().setup_fluid_fields()
+
+        # Imposed, could be improved
+        mH = mp
+        mHe = 4.0 * mp
+
+        def _temperature_over_mu(_, data):
+            res = data["gas", "pressure"] / data["gas", "density"] * mp / kb
+            return res
+
+        self.add_field(
+            ("gas", "temperature_over_mu"),
+            sampling_type="cell",
+            function=_temperature_over_mu,
+            units=self.ds.unit_system["temperature"],
+        )
+
+        if ("gas", "H_p0_fraction") in self and ("gas", "H_p1_fraction") in self:
+            def _H2_fraction(_, data):
+                res = 1.0 - data["gas", "H_p0_fraction"] - data["gas", "H_p1_fraction"]
+                return res
+
+            self.add_field(
+                ("gas", "H2_fraction"),
+                sampling_type="cell",
+                function=_H2_fraction,
+                units="",
+            )
+
+        if ("gas", "He_p1_fraction") in self and ("gas", "He_p2_fraction") in self:
+            def _He_p0_fraction(_, data):
+                res = 1.0 - data["gas", "He_p1_fraction"] - data["gas", "He_p2_fraction"]
+                return res
+
+            self.add_field(
+                ("gas", "He_p0_fraction"),
+                sampling_type="cell",
+                function=_He_p0_fraction,
+                units="",
+            )
+
+        def _n_e(_, data):
+            res = 0.0
+
+            res += data["gas", "H_p1_fraction"] * X_H / mH
+            res += data["gas", "He_p1_fraction"] * Y_He / mHe
+            res += 2 * data["gas", "He_p2_fraction"] * Y_He / mHe
+            res *= data["gas", "density"]
+            return res
+
+        self.add_field(
+            ("gas", "n_e"),
+            sampling_type="cell",
+            function=_n_e,
+            units=n_units,
+        )
+
+        def _mu(_, data):
+            ires = 0.0
+
+            ires = X_H * (
+                data["gas", "H_p0_fraction"] +
+                2 * data["gas", "H_p1_fraction"] +
+                0.5 * data["gas", "H2_fraction"]
+            ) * mp/mH + \
+            Y_He * (
+                data["gas", "He_p0_fraction"] +
+                2 * data["gas", "He_p1_fraction"] +
+                3 * data["gas", "He_p2_fraction"]
+            ) * mp/mHe
+            return 1.0/ires
+
+        self.add_field(
+            ("gas", "mu"),
+            sampling_type="cell",
+            function=_mu,
+            units="",
+        )
+
+        def _number_density(_, data):
+            return data["gas", "density"] / mp / data["gas", "mu"]
+
+        self.add_field(
+            ("gas", "number_density"),
+            sampling_type="cell",
+            function=_number_density,
+            units=n_units,
+        )
+
+        def _temperature(_, data):
+            return data["gas", "temperature_over_mu"] * data["gas", "mu"]
+
+        self.add_field(
+            ("gas", "temperature"),
+            sampling_type="cell",
+            function=_temperature,
+            units=self.ds.unit_system["temperature"],
+        )
+        self._show_field_errors.append(("gas", "mu"))
+        self._show_field_errors.append(("gas", "temperature"))
+
 
 class IOHandlerRamses(BaseIOHandler):
     _dataset_type = "ramses_io"
@@ -332,7 +442,7 @@ class IOHandlerRamses(BaseIOHandler):
                     for field in field_list:
                         yield (ptype,field), np.asarray(rv[field][mask],"=f8")
 
-class RamsesDataset(Dataset):
+class Ramses2Dataset(Dataset):
     _index_class = RamsesIndex
     _field_info_class = RamsesFieldInfo
 
